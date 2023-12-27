@@ -35,7 +35,9 @@ func getTokenFromUrl(wbiUrl string) string {
 	return key
 }
 
-// UpdateWbiKey 更新缓存中的 img_key 和 sub_key
+// UpdateWbiKey
+//
+//	@Description: 更新缓存中的 wbi 鉴权所需参数 img_key 和 sub_key
 func UpdateWbiKey() {
 	resp, err := http.Get("https://api.bilibili.com/x/web-interface/nav")
 	if err != nil {
@@ -81,7 +83,11 @@ func getMixinKey(orig string) string {
 	return str.String()[:32]
 }
 
-// ParamSign 为参数添加 wts 和 w_rid
+// ParamSign
+//
+//	@Description: 向参数映射中添加 wts 和 w_rid 鉴权签名
+//	@param param 需要加签名的参数映射
+//	@return map[string]interface{}
 func ParamSign(param map[string]interface{}) map[string]interface{} {
 	_, ok := param["wts"]
 	if !ok {

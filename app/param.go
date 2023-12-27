@@ -12,7 +12,11 @@ const (
 	MobiApp     = "android"
 )
 
-// ParamSign 为参数添加 appkey 和 sign
+// ParamSign
+//
+//	@Description: 向参数映射中添加 appkey 和 sign 鉴权签名
+//	@param param 需要加签名的参数映射
+//	@return map[string]interface{}
 func ParamSign(param map[string]interface{}) map[string]interface{} {
 	_, ok := param["appkey"]
 	if !ok {
