@@ -17,3 +17,13 @@ func TestParamSign(t *testing.T) {
 		t.Error("APP签名错误")
 	}
 }
+
+func TestGetVersions(t *testing.T) {
+	build, _, err := GetVersions("")
+	if err != nil {
+		t.Error(err)
+	}
+	if build != "7580300" {
+		t.Errorf("获取版本号失败: build = %s", build)
+	}
+}

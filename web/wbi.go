@@ -1,19 +1,13 @@
 package web
 
 import (
-	"encoding/json"
 	"github.com/boxie123/BilibiliAuthorize/utils"
-	"io"
+	"github.com/go-resty/resty/v2"
 	"log"
-	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-)
-
-const (
-	ApiNav = "https://api.bilibili.com/x/web-interface/nav" // 导航栏用户信息, 用于获取 img_url 和 sub_url
 )
 
 var (
@@ -39,20 +33,12 @@ func getTokenFromUrl(wbiUrl string) string {
 //
 //	@Description: 更新缓存中的 wbi 鉴权所需参数 img_key 和 sub_key
 func UpdateWbiKey() {
-	resp, err := http.Get("https://api.bilibili.com/x/web-interface/nav")
+	client := resty.New()
+	resp, err := client.R().SetResult(&NavResp{}).Get("https://api.bilibili.com/x/web-interface/nav")
 	if err != nil {
 		log.Printf("Error: %s", err)
 	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Error: %s", err)
-	}
-	var result NavResp
-	err = json.Unmarshal(body, &result)
-	if err != nil {
-		log.Printf("Error: %s", err)
-	}
+	result := resp.Result().(*NavResp)
 	imgUrl := result.Data.WbiImg.ImgURL
 	subUrl := result.Data.WbiImg.SubURL
 	cache.Store("imgKey", getTokenFromUrl(imgUrl))
