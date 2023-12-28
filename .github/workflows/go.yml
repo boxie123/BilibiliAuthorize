@@ -25,10 +25,10 @@ jobs:
       run: go mod tidy
 
     - name: Test with Go
-      run: go test -json -v ./... > TestResults-${{ matrix.go-version }}.json
+      run: go test -json -v ./... > TestResults.json
 
     - name: Upload Go test results
       uses: actions/upload-artifact@v3
       with:
-        name: Go-results-${{ matrix.go-version }}
-        path: TestResults-${{ matrix.go-version }}.json
+        name: Go-results
+        path: TestResults.json
