@@ -1,16 +1,35 @@
 package app
 
 import (
-	"encoding/base64"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
-	"log"
-	"math"
-	"strconv"
 	"strings"
-	"unicode"
 )
+
+// NewDevice
+//
+//	@Description: 生成新的设备信息
+//	@param AndroidModel 手机型号
+//	@param AndroidBuild 安卓版本
+//	@return *Device
+//	@return error 错误处理
+func NewDevice(AndroidModel string, AndroidBuild string) (*Device, error) {
+	device := &Device{
+		AndroidModel: AndroidModel,
+		AndroidBuild: AndroidBuild,
+	}
+	device.GenerateFakeBuvid()
+	err := device.GetVersions("")
+	if err != nil {
+		return nil, err
+	}
+	_, err = device.GetSdkInt()
+	if err != nil {
+		return nil, err
+	}
+	return device, nil
+}
 
 // GenerateFakeBuvid
 //
@@ -28,7 +47,7 @@ func (d *Device) GenerateFakeBuvid() {
 // GetVersions
 //
 //	@Description: 获取最新版本的 build 和 version
-//	@param mod 传参, 若为空则传入 "android"
+//	@param mod 传参, 若为空则传入 MobiApp
 //	@return string build
 //	@return string version
 //	@return error 错误处理
@@ -38,13 +57,13 @@ func (d *Device) GetVersions(mod string) error {
 	}
 	client := resty.New()
 	resp, err := client.R().
-		SetResult(&AppVersionResponse{}).
+		SetResult(&BilibiliVersionResponse{}).
 		SetQueryParam("mobi_app", mod).
 		Get("https://app.bilibili.com/x/v2/version")
 	if err != nil {
 		return err
 	}
-	result := resp.Result().(*AppVersionResponse)
+	result := resp.Result().(*BilibiliVersionResponse)
 	if len(result.Data) > 0 {
 		d.VersionCode = fmt.Sprintf("%d", result.Data[0].Build)
 		d.VersionName = result.Data[0].Version
@@ -60,8 +79,11 @@ func (d *Device) GetVersions(mod string) error {
 //	@param AndroidVersion 安卓系统版本
 //	@return string sdk版本
 //	@return error 错误处理
-func (d *Device) GetSdkInt() string {
+func (d *Device) GetSdkInt() (string, error) {
 	AndroidVersion := d.AndroidBuild
+	if AndroidVersion == "" {
+		return "", fmt.Errorf("请先指定安卓系统版本")
+	}
 	buildList := strings.Split(AndroidVersion, ".")
 	var sdkInt string
 	data := SystemSdkIntMap
@@ -69,73 +91,45 @@ func (d *Device) GetSdkInt() string {
 		value, ok := data[li]
 		if !ok {
 			if sdkInt != "" {
-				return sdkInt
+				return sdkInt, nil
 			}
-			log.Println("未找到" + AndroidVersion + "的sdk_int")
-			return ""
+			return "", fmt.Errorf("未找到 %s 的sdk_int", AndroidVersion)
 		}
 		sdkInt = value["value"].(string)
 		data = map[string]map[string]interface{}{
 			li: value,
 		}
 	}
-	return sdkInt
-}
-
-// BuildXBiliAuroraEID
-//
-//	@Description: 生成 x-bili-aurora-eid
-//	@param mid 用户 uid
-//	@return string x-bili-aurora-eid
-func BuildXBiliAuroraEID(mid string) string {
-	length := len(mid)
-	byteArr := make([]byte, length)
-
-	if length-1 < 0 {
-		return ""
-	}
-
-	for i := 0; i < length; i++ {
-		s := unicode.ToLower(rune("ad1va46a7lza"[i%12]))
-		byteArr[i] = byte(mid[i]) ^ byte(s)
-	}
-
-	return base64.StdEncoding.EncodeToString(byteArr)
-}
-
-// BuildXBiliTraceID
-//
-//	@Description: 生成 x-bili-trace-id
-//	@param timeStamp
-//	@return string
-func BuildXBiliTraceID(timeStamp int64) string {
-	back6 := strconv.FormatInt(int64(math.Round(float64(timeStamp)/256)), 16)
-	front := strings.ReplaceAll(uuid.New().String(), "-", "")
-	_data1 := front[6:] + back6[2:]
-	_data2 := front[22:] + back6[2:]
-
-	return fmt.Sprintf("%v:%v:0:0", _data1, _data2)
-}
-
-// BuildSessionID
-//
-//	@Description: 构造随机 Session ID
-//	@return string SessionID
-func BuildSessionID() string {
-	return strings.ReplaceAll(uuid.New().String(), "-", "")[:8]
+	return sdkInt, nil
 }
 
 // BuildUserAgent
 //
 //	@Description: 构造User-Agent
 //	@param device 设备信息
-func (d *Device) BuildUserAgent() string {
+func (d *Device) BuildUserAgent() (string, error) {
+	sdkInt, err := d.GetSdkInt()
+	if err != nil {
+		return "", err
+	}
+	if d.VersionCode == "" || d.VersionName == "" {
+		err = d.GetVersions("")
+		if err != nil {
+			return "", err
+		}
+	}
+	if d.AndroidModel == "" {
+		return "", fmt.Errorf("AndroidModel为空")
+	}
+	if d.BilibiliBuvid == "" {
+		d.GenerateFakeBuvid()
+	}
 	varMap := map[string]string{
 		"ANDROID_BUILD":   d.AndroidBuild,
 		"ANDROID_MODEL":   d.AndroidModel,
 		"ANDROID_BUILD_M": BuildM,
 		"BUVID":           d.BilibiliBuvid,
-		"SDK_INT":         d.GetSdkInt(),
+		"SDK_INT":         sdkInt,
 		"VERSION_CODE":    d.VersionCode,
 		"CHANNEL":         Channel,
 		"SESSION_ID":      BuildSessionID(),
@@ -148,5 +142,5 @@ func (d *Device) BuildUserAgent() string {
 		strTemplate = strings.ReplaceAll(strTemplate, "{"+k+"}", v)
 	}
 
-	return strTemplate
+	return strTemplate, nil
 }

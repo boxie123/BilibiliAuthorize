@@ -74,7 +74,7 @@ func getMixinKey(orig string) string {
 //	@Description: 向参数映射中添加 wts 和 w_rid 鉴权签名
 //	@param param 需要加签名的参数映射
 //	@return map[string]interface{}
-func ParamSign(param map[string]interface{}) map[string]interface{} {
+func ParamSign(param map[string]string) map[string]string {
 	_, ok := param["wts"]
 	if !ok {
 		param["wts"] = strconv.FormatInt(time.Now().Unix(), 10)

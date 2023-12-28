@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-// ParamEncode 将 map[string]interface{} 类型的参数按 key 排序, 编码为 url encoded 形式
-func ParamEncode(param map[string]interface{}) string {
+// ParamEncode 将 map[string]string 类型的参数按 key 排序, 编码为 url encoded 形式
+func ParamEncode(param map[string]string) string {
 	v := url.Values{}
 	for key, value := range param {
-		v.Add(key, fmt.Sprintf("%v", value))
+		v.Add(key, value)
 	}
 	s := v.Encode()
 	// 将空格用 "%20" 编码, 而不是 "+"

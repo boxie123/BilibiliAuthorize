@@ -1,10 +1,10 @@
 package app
 
-type AppVersionResponse struct {
-	Data []AppVersionData `json:"data"`
+type BilibiliVersionResponse struct {
+	Data []BilibiliVersionData `json:"data"`
 }
 
-type AppVersionData struct {
+type BilibiliVersionData struct {
 	Build   int    `json:"build"`
 	Version string `json:"version"`
 }
