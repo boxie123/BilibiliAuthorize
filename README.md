@@ -22,10 +22,10 @@ import (
 )
 
 func main() {
-	param := map[string]interface{}{
+	param := map[string]string{
 		"foo": "114",
 		"bar": "514",
-		"zab": 1919810,
+		"zab": "1919810",
 	}
 	param1 := web.ParamSign(param)
 	param2 := app.ParamSign(param)
