@@ -2,9 +2,14 @@
  Go实现的Bilibili Api签名
 
 ## 使用
+```cmd
+go get -u github.com/boxie123/BilibiliAuthorize/web
 ```
-go get -u github.com/boxie123/BilibiliAuthorize
+
+```cmd
+go get -u github.com/boxie123/BilibiliAuthorize/app
 ```
+按需引入
 
 ## 示例
 ```go
